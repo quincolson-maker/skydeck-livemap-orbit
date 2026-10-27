@@ -72,7 +72,7 @@ const bloom=S.postProcessStages.bloom;bloom.enabled=true;bloom.uniforms.contrast
 const day=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maximumLevel:19,credit:'Imagery © Esri, Maxar, Earthstar Geographics'}));
 day.saturation=1.15;day.contrast=1.12;day.brightness=1.0;day.gamma=1.05;
 const night=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png',maximumLevel:8,credit:'NASA Black Marble (VIIRS)'}));
-night.dayAlpha=0;night.nightAlpha=1;night.brightness=2.2;night.contrast=1.3;
+night.dayAlpha=0;night.nightAlpha=1;night.brightness=3.2;night.contrast=1.6;night.gamma=0.75;night.saturation=1.4;
 // ---------- real GOES-East IR clouds (IEM), turned into soft white cloud alpha ----------
 let cloudLayer=null;const CR=C.Rectangle.fromDegrees(-135,18,-58,55);
 async function loadClouds(){try{const im=new Image();im.crossOrigin='anonymous';await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src='/api/clouds?t='+Date.now()});
