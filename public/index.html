@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SkyDeck Live Map · Orbit</title>
-<script>window.CESIUM_BASE_URL='https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/'</script>
+<link rel="icon" href="data:,"><script>window.onerror=(m)=>{const d=document.getElementById("err");if(d){d.style.display="block";d.textContent="Orbit map could not start: "+m+" — this view needs a browser with WebGL (Chrome/Edge/Safari). The 2D map is at skydeck-livemap.onrender.com"}};window.CESIUM_BASE_URL='https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/'</script>
 <script src="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Cesium.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 <style>
@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"Helv
 #spot .cap{font-size:.72vw;color:#444;margin-top:.3vw;letter-spacing:.04em}
 #spot .phase{position:absolute;right:1.4vw;bottom:.6vw;font-size:.7vw;color:#666;letter-spacing:.1em}
 </style></head><body>
-<div id="cz"></div><div id="vig"></div><div id="dim"></div>
+<div id="err" style="display:none;position:fixed;z-index:9;left:20%;right:20%;top:40%;padding:2vw;background:#111;color:#fff;font-size:1.4vw;border-radius:1vw"></div><div id="cz"></div><div id="vig"></div><div id="dim"></div>
 <div class="card" id="title"><div class="t">SKYDECK <b>LIVE MAP · ORBIT</b></div><div class="s"><span id="clock">—</span> · <span id="cnt"></span> <span id="stale">STALE</span><br><span id="sun"></span> <span id="rtime"></span></div></div>
 <div class="card" id="legend"><div class="r" style="color:#19e35a"><i class="d" style="background:#19e35a"></i>VFR</div><div class="r" style="color:#2f7bff"><i class="d" style="background:#2f7bff"></i>MVFR</div><div class="r" style="color:#ff2a3a"><i class="d" style="background:#ff2a3a"></i>IFR</div><div class="r" style="color:#ff3cf0"><i class="d" style="background:#ff3cf0"></i>LIFR</div></div>
 <div class="card" id="plan"><h3>Flight Plan</h3><div class="big" id="pRoute"></div>
