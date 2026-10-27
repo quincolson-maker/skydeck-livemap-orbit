@@ -67,7 +67,7 @@ G.enableLighting=true;G.dynamicAtmosphereLighting=true;G.dynamicAtmosphereLighti
 G.lightingFadeOutDistance=1;G.lightingFadeInDistance=2;G.nightFadeOutDistance=1;G.nightFadeInDistance=2;
 G.baseColor=C.Color.fromCssColorString('#05101c');G.maximumScreenSpaceError=1.5;G.tileCacheSize=400;
 S.skyAtmosphere.show=true;S.skyAtmosphere.atmosphereLightIntensity=12;S.fog.enabled=true;S.fog.density=1.2e-4;
-S.sun.show=true;S.moon.show=true;S.highDynamicRange=false;
+S.sun.show=false;S.moon.show=false;S.highDynamicRange=false;
 const bloom=S.postProcessStages.bloom;bloom.enabled=true;bloom.uniforms.contrast=119;bloom.uniforms.brightness=-0.35;bloom.uniforms.delta=1;bloom.uniforms.sigma=2.2;bloom.uniforms.stepSize=1;
 const day=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maximumLevel:19,credit:'Imagery © Esri, Maxar, Earthstar Geographics'}));
 day.saturation=1.15;day.contrast=1.12;day.brightness=1.0;day.gamma=1.05;
@@ -80,8 +80,8 @@ async function loadClouds(){try{const im=new Image();im.crossOrigin='anonymous';
  const Wd=cv.width,Hd=cv.height,fe=60;for(let i=0;i<p.length;i+=4){if(p[i+3]<10||(p[i]>248&&p[i+1]>248&&p[i+2]>248)){p[i+3]=0;continue}const x=(i/4)%Wd,y=(i/4/Wd)|0,edge=Math.min(1,x/fe,(Wd-x)/fe,y/fe,(Hd-y)/fe);const r=p[i],gg=p[i+1],b=p[i+2],gray=Math.abs(r-gg)<14&&Math.abs(gg-b)<14,v=gray?r:255;let a=Math.max(0,Math.min(1,(v-158)/85));a=a*a*(3-2*a)*edge;
   p[i]=236+19*a;p[i+1]=240+15*a;p[i+2]=246+9*a;p[i+3]=a*215}
  g.putImageData(d,0,0);const prov=await C.SingleTileImageryProvider.fromUrl(cv.toDataURL('image/png'),{rectangle:CR,credit:'GOES-East ABI Band 13 IR via Iowa Environmental Mesonet'});
- const nl=L.addImageryProvider(prov);nl.alpha=0;fadeLayer(nl,.82);if(cloudLayer){const o=cloudLayer;fadeLayer(o,0,()=>L.remove(o))}cloudLayer=nl;radarTop()}catch(e){console.warn('clouds',e)}}
-function fadeLayer(l,to,done){const a0=l.alpha,t0=performance.now();const f=n=>{const k=Math.min(1,(n-t0)/1500);l.alpha=a0+(to-a0)*k;if(k<1)requestAnimationFrame(f);else done&&done()};requestAnimationFrame(f)}
+ const nl=L.addImageryProvider(prov);nl.alpha=0;nl._b=0;nl._cl=1;fadeLayer(nl,.82);if(cloudLayer){const o=cloudLayer;o._cl=1;fadeLayer(o,0,()=>L.remove(o))}cloudLayer=nl;radarTop()}catch(e){console.warn('clouds',e)}}
+function fadeLayer(l,to,done){const a0=l.alpha,t0=performance.now();const b0=l._cl?l._b:a0;const f=n=>{const k=Math.min(1,(n-t0)/1500);if(l._cl)l._b=b0+(to-b0)*k;else l.alpha=a0+(to-a0)*k;if(k<1)requestAnimationFrame(f);else done&&done()};requestAnimationFrame(f)}
 // ---------- live NEXRAD radar (IEM n0q) ----------
 let radarLayer=null,radarT=null;const RR=C.Rectangle.fromDegrees(-127,22,-64,52);
 async function loadRadar(){if(!radarOn)return;try{const prov=await C.SingleTileImageryProvider.fromUrl('/api/radar?t='+Date.now(),{rectangle:RR,credit:'NEXRAD via Iowa Environmental Mesonet'});
@@ -111,7 +111,7 @@ const PER=+(Q.get('orbit')||900)*1000,T0=Date.now();
 function orbitPose(t){const w=2*Math.PI*((t-T0)/PER);const lon=-96+21*Math.sin(w),lat=37.5+4.5*Math.sin(2*w+.6),hd=C.Math.toRadians(8*Math.cos(w)),pitch=C.Math.toRadians(-52-6*Math.sin(w*1.5)),range=3.0e6+5e5*Math.cos(w*2);
  const cam=new C.Camera(S);cam.lookAt(C.Cartesian3.fromDegrees(lon,lat,0),new C.HeadingPitchRange(hd,pitch,range));cam.lookAtTransform(C.Matrix4.IDENTITY);return cam}
 function applyOrbit(){const c=orbitPose(Date.now());S.camera.setView({destination:c.positionWC,orientation:{direction:c.directionWC,up:c.upWC}})}
-S.preRender.addEventListener(()=>{if(mode==='orbit')applyOrbit()});
+S.preRender.addEventListener(()=>{if(mode==='orbit')applyOrbit();const h=S.camera.positionCartographic.height,hf=Math.max(0,Math.min(1,(h-2.5e5)/9e5));for(let i=0;i<L.length;i++){const l=L.get(i);if(l._cl)l.alpha=l._b*hf}});
 function backToOrbit(ms=4500){mode='fly';const c=orbitPose(Date.now()+ms);return new Promise(ok=>S.camera.flyTo({destination:c.positionWC,orientation:{direction:c.directionWC,up:c.upWC},duration:ms/1000,easingFunction:C.EasingFunction.CUBIC_IN_OUT,complete:()=>{mode='orbit';ok()},cancel:ok}))}
 const scc=S.screenSpaceCameraController;scc.inertiaSpin=.8;scc.inertiaZoom=.6;
 ['pointerdown','wheel','touchstart'].forEach(ev=>S.canvas.addEventListener(ev,()=>{userT=Date.now();if(mode!=='user'){S.camera.cancelFlight();mode='user'}},{passive:true}));
@@ -139,9 +139,10 @@ async function loadPlan(){try{const j=await(await fetch('/api/plan',{cache:'no-s
   $('pVia').textContent=planData.route.map(p=>p.id).join(' ');$('pDist').textContent=planData.distNm+' NM';}else el.style.display='none'}
 // ---------- Airport Spotlight: orbit -> DEP -> orbit -> DEST every ?cycle= s (default 15) ----------
 const CYC=Math.max(5,+(Q.get('cycle')||15))*1000,SP={},CATC={VFR:'#00a83a',MVFR:'#0a50ff',IFR:'#e00010',LIFR:'#c000c0'};let phase=0,spotOn=null,tok=0;
-setInterval(()=>{if(!planData){if(spotOn)hideSpot();phase=0;return}if(mode==='user'&&Date.now()-userT<60e3)return;
- phase=(phase+1)%4;tok++;if(phase===1)showSpot(planData.dep.id,'DEPARTURE');else if(phase===3)showSpot(planData.dest.id,'DESTINATION');else hideSpot()},CYC);
-function hideSpot(){const was=spotOn;spotOn=null;$('spot').classList.remove('on');if(!was)return;setTimeout(()=>{if(spotOn)return;$('dim').classList.remove('on');$('radarBtn').style.visibility='';backToOrbit(4500)},700)}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),busy=()=>mode==='user'&&Date.now()-userT<60e3;
+(async function cycle(){for(;;){await sleep(CYC);if(!planData||busy())continue;
+ for(const[id,role]of[[planData.dep.id,'DEPARTURE'],[planData.dest.id,'DESTINATION']]){if(!planData||busy())break;tok++;await showSpot(id,role);await sleep(CYC);await hideSpot();if(!planData||busy())break;await sleep(CYC)}}})();
+async function hideSpot(){const was=spotOn;spotOn=null;$('spot').classList.remove('on');if(!was)return;await sleep(700);$('dim').classList.remove('on');$('radarBtn').style.visibility='';if(mode!=='user')await backToOrbit(4500)}
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function spotData(id){const s=SP[id];if(s&&Date.now()-s.t<120e3)return s.d;const d=await(await fetch('/api/spot?id='+id)).json();SP[id]={t:Date.now(),d,apd:s?.apd,aer:s?.aer};
  if(!SP[id].aer){const im=new Image();im.src=`/api/aerial?lat=${d.lat}&lon=${d.lon}&span=${spanFor(d)}`;SP[id].aer=im}
