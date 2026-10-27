@@ -13,7 +13,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"Helv
 #title .t{font-size:1.15vw;font-weight:800;letter-spacing:.22em}#title .t b{color:#7fd4ff;font-weight:300}
 #title .s{font-size:.72vw;color:#a9bccf;letter-spacing:.06em;margin-top:.2vw}
 #legend{right:1.6%;top:2.4%;padding:.6vw .9vw;display:flex;gap:1vw;align-items:center}
-#legend .r{display:flex;align-items:center;gap:.4vw;font-weight:700;font-size:.85vw}
+#legend .r{display:flex;align-items:center;gap:.4vw;font-weight:800;font-size:1.05vw}
 #legend .d{width:.8vw;height:.8vw;border-radius:50%;border:.12vw solid #000;box-shadow:0 0 .5vw currentColor}
 #plan{left:1.6%;bottom:3%;padding:.8vw 1.1vw;min-width:17vw;display:none}
 #plan .big{font-size:1.9vw;font-weight:800;letter-spacing:.06em}
@@ -55,13 +55,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"Helv
 <div id="spot"></div>
 <button id="radarBtn" tabindex="0">RADAR OFF (R)</button>
 <script>
-const Q=new URLSearchParams(location.search),$=id=>document.getElementById(id),C=Cesium;
+const Q=new URLSearchParams(location.search),TOFF=Q.get('time')?Date.parse(Q.get('time'))-Date.now():0,NOW=()=>Date.now()+TOFF,$=id=>document.getElementById(id),C=Cesium;
 const COL={VFR:'#19e35a',MVFR:'#2f7bff',IFR:'#ff2a3a',LIFR:'#ff3cf0'};
 let stations=[],planData=null,radarOn=Q.get('radar')==='1'||localStorage.radar==='1',userT=0,mode='orbit';
 const viewer=new C.Viewer('cz',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,msaaSamples:4,useBrowserRecommendedResolution:false,contextOptions:{webgl:{alpha:false}}});
 const S=viewer.scene,G=S.globe,L=viewer.imageryLayers;
 viewer.resolutionScale=Math.min(innerWidth<900?1.5:2,window.devicePixelRatio||1);
-viewer.clock.shouldAnimate=true;viewer.clock.multiplier=1;viewer.clock.currentTime=C.JulianDate.now();
+viewer.clock.shouldAnimate=true;viewer.clock.multiplier=1;viewer.clock.currentTime=C.JulianDate.fromDate(new Date(NOW()));
 // Real sun: Cesium's SunLight follows the clock (= now), so terminator + day/night lighting are astronomically placed.
 G.enableLighting=true;G.dynamicAtmosphereLighting=true;G.dynamicAtmosphereLightingFromSun=true;G.showGroundAtmosphere=true;
 G.lightingFadeOutDistance=1;G.lightingFadeInDistance=2;G.nightFadeOutDistance=1;G.nightFadeInDistance=2;
@@ -72,7 +72,7 @@ const bloom=S.postProcessStages.bloom;bloom.enabled=true;bloom.uniforms.contrast
 const day=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maximumLevel:19,credit:'Imagery © Esri, Maxar, Earthstar Geographics'}));
 day.saturation=1.15;day.contrast=1.12;day.brightness=1.0;day.gamma=1.05;
 const night=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png',maximumLevel:8,credit:'NASA Black Marble (VIIRS)'}));
-night.dayAlpha=0;night.nightAlpha=1;night.brightness=1.6;
+night.dayAlpha=0;night.nightAlpha=1;night.brightness=2.2;night.contrast=1.3;
 // ---------- real GOES-East IR clouds (IEM), turned into soft white cloud alpha ----------
 let cloudLayer=null;const CR=C.Rectangle.fromDegrees(-135,18,-58,55);
 async function loadClouds(){try{const im=new Image();im.crossOrigin='anonymous';await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src='/api/clouds?t='+Date.now()});
@@ -102,12 +102,12 @@ let lastOk=0;async function loadMetars(){try{const j=await(await fetch('/api/met
 // ---------- sun readout (real subsolar point) ----------
 function subsolar(d){const jd=d/864e5+2440587.5,n=jd-2451545,Lm=(280.46+.9856474*n)%360,g=(357.528+.9856003*n)*Math.PI/180,lam=(Lm+1.915*Math.sin(g)+.02*Math.sin(2*g))*Math.PI/180,eps=(23.439-4e-7*n)*Math.PI/180;
  const dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam)),gmst=(280.46061837+360.98564736629*n)%360;let lon=(ra*180/Math.PI-gmst)%360;lon=((lon+540)%360)-180;return{lat:dec*180/Math.PI,lon}}
-function tick(){const ss=subsolar(Date.now());$('sun').textContent=`Sun overhead ${Math.abs(ss.lat).toFixed(1)}°${ss.lat<0?'S':'N'} ${Math.abs(ss.lon).toFixed(1)}°${ss.lon<0?'W':'E'}`;
+function tick(){const ss=subsolar(NOW());$('sun').textContent=`Sun overhead ${Math.abs(ss.lat).toFixed(1)}°${ss.lat<0?'S':'N'} ${Math.abs(ss.lon).toFixed(1)}°${ss.lon<0?'W':'E'}`;
  $('clock').textContent=new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago',timeZoneName:'short'})+(lastOk?' · METAR '+fmt(lastOk,false):'');
- if(lastOk&&Date.now()-lastOk>15*6e4)$('stale').style.display='inline';viewer.clock.currentTime=C.JulianDate.now()}
+ if(lastOk&&Date.now()-lastOk>15*6e4)$('stale').style.display='inline';viewer.clock.currentTime=C.JulianDate.fromDate(new Date(NOW()))}
 // ---------- slow satellite orbit over CONUS ----------
-const PER=+(Q.get('orbit')||900)*1000,T0=Date.now();
-function orbitPose(t){const w=2*Math.PI*((t-T0)/PER);const lon=-96+21*Math.sin(w),lat=37.5+4.5*Math.sin(2*w+.6),hd=C.Math.toRadians(8*Math.cos(w)),pitch=C.Math.toRadians(-52-6*Math.sin(w*1.5)),range=3.0e6+5e5*Math.cos(w*2);
+const PER=+(Q.get('orbit')||300)*1000,T0=Date.now();
+function orbitPose(t){const w=2*Math.PI*((t-T0)/PER);const lon=-96+24*Math.sin(w),lat=37.5+5*Math.sin(2*w+.6),hd=C.Math.toRadians(14*Math.cos(w)),pitch=C.Math.toRadians(-52-6*Math.sin(w*1.5)),range=3.0e6+5e5*Math.cos(w*2);
  const cam=new C.Camera(S);cam.lookAt(C.Cartesian3.fromDegrees(lon,lat,0),new C.HeadingPitchRange(hd,pitch,range));cam.lookAtTransform(C.Matrix4.IDENTITY);return cam}
 function applyOrbit(){const c=orbitPose(Date.now());S.camera.setView({destination:c.positionWC,orientation:{direction:c.directionWC,up:c.upWC}})}
 S.preRender.addEventListener(()=>{if(mode==='orbit')applyOrbit();const h=S.camera.positionCartographic.height,hf=Math.max(0,Math.min(1,(h-2.5e5)/9e5));for(let i=0;i<L.length;i++){const l=L.get(i);if(l._cl)l.alpha=l._b*hf}});
