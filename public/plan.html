@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SkyDeck Live Map – Plan</title>
+<style>body{font-family:Arial,sans-serif;max-width:720px;margin:2em auto;padding:0 1em}textarea{width:100%;height:14em;font:15px monospace}button{font-size:17px;padding:.5em 1em;margin:.4em .4em 0 0}pre{background:#f3f3f3;padding:1em;white-space:pre-wrap}</style></head><body>
+<h2>SkyDeck Live Map: load a flight plan</h2>
+<p>Or email/forward it to <b>firerelief+qclivemap@mail.grokbot.com</b>.</p>
+<p>Paste a ForeFlight email, a trip sheet, or just type something like:<br><code>Route: KPAH DCT CGI DCT KJVY<br>ETD: 10/21 14:30 CDT<br>ETE: 1:10</code></p>
+<p>Key: <input id="k" placeholder="plan key" style="font-size:16px"></p>
+<textarea id="t"></textarea><br><button onclick="go(0)">Load on map</button><button onclick="go(1)">Test parse only</button><button onclick="clr()">Clear plan</button>
+<pre id="o"></pre>
+<script>const k=document.getElementById('k');k.value=new URLSearchParams(location.search).get('key')||localStorage.pk||'';
+async function go(dry){localStorage.pk=k.value;const r=await fetch('/api/plan?key='+encodeURIComponent(k.value)+(dry?'&dry=1':''),{method:'POST',headers:{'Content-Type':'text/plain'},body:document.getElementById('t').value});const j=await r.json();
+o.textContent=j.plan?`${j.plan.dep.id} → ${j.plan.dest.id}  (${j.plan.distNm} NM)\nRoute: ${j.plan.route.map(p=>p.id).join(' ')}\nETD: ${new Date(j.plan.etd).toLocaleString('en-US',{timeZone:'America/Chicago',timeZoneName:'short'})}\nETA: ${new Date(j.plan.eta).toLocaleString('en-US',{timeZone:'America/Chicago',timeZoneName:'short'})}\n${dry?'(test only, not loaded)':'Loaded. It expires 45 min after ETA.'}`:'Error: '+(j.error||r.status)}
+async function clr(){const r=await fetch('/api/plan?key='+encodeURIComponent(k.value),{method:'DELETE'});o.textContent=r.ok?'Cleared':'Error '+r.status}</script></body></html>

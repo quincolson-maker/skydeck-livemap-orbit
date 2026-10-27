@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: skydeck-livemap-orbit
+    runtime: node
+    plan: free
+    buildCommand: echo no build
+    startCommand: node server.js
+    healthCheckPath: /api/ping
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PLAN_UPSTREAM
+        value: https://skydeck-livemap.onrender.com
+      - key: INBOUND_KEY
+        sync: false

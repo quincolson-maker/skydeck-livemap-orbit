@@ -1,0 +1,183 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkyDeck Live Map · Orbit</title>
+<script>window.CESIUM_BASE_URL='https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/'</script>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Cesium.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"Helvetica Neue",Arial,sans-serif;color:#eef3f8}
+#cz{position:fixed;inset:0}.cesium-viewer-bottom{display:none!important}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%)}
+.card{position:fixed;z-index:3;background:rgba(8,14,24,.58);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:.6vw;box-shadow:0 .6vw 2.4vw rgba(0,0,0,.45);font-size:.95vw;line-height:1.35}
+.card h3{margin:0 0 .35vw;font-size:.72vw;letter-spacing:.22em;text-transform:uppercase;color:#9fb6cc;font-weight:700}
+#title{left:1.6%;top:2.4%;padding:.6vw 1vw}
+#title .t{font-size:1.15vw;font-weight:800;letter-spacing:.22em}#title .t b{color:#7fd4ff;font-weight:300}
+#title .s{font-size:.72vw;color:#a9bccf;letter-spacing:.06em;margin-top:.2vw}
+#legend{right:1.6%;top:2.4%;padding:.6vw .9vw;display:flex;gap:1vw;align-items:center}
+#legend .r{display:flex;align-items:center;gap:.4vw;font-weight:700;font-size:.85vw}
+#legend .d{width:.8vw;height:.8vw;border-radius:50%;border:.12vw solid #000;box-shadow:0 0 .5vw currentColor}
+#plan{left:1.6%;bottom:3%;padding:.8vw 1.1vw;min-width:17vw;display:none}
+#plan .big{font-size:1.9vw;font-weight:800;letter-spacing:.06em}
+#plan .row{display:flex;justify-content:space-between;gap:1.4vw}
+#plan .lab{font-size:.62vw;letter-spacing:.16em;color:#9fb6cc;text-transform:uppercase}
+#plan .val{font-size:1.05vw;font-weight:700}
+#radarBtn{position:fixed;z-index:3;right:1.6%;bottom:3%;padding:.7vw 1.3vw;font:800 1vw "Helvetica Neue",Arial;color:#eef3f8;background:rgba(8,14,24,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.25);border-radius:.6vw;cursor:pointer;letter-spacing:.14em}
+#radarBtn.on{background:rgba(30,150,80,.75);border-color:#7dffb0}
+#radarBtn:focus{outline:.2vw solid #ffb300}
+#stale{color:#ff6b6b;font-weight:800;display:none}
+#dim{z-index:2;position:fixed;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.45));opacity:0;transition:opacity .8s;pointer-events:none}#dim.on{opacity:1}
+#spot{z-index:4;position:fixed;left:50%;right:1.5%;top:3%;bottom:3%;background:rgba(250,251,252,.94);border-radius:.6vw;border:1px solid rgba(255,255,255,.6);box-shadow:0 .5vw 2vw rgba(0,0,0,.45);opacity:0;transform:translateX(3%) scale(.98);transition:opacity .6s ease,transform .6s ease;display:flex;flex-direction:column;padding:1.2vw 1.4vw;box-sizing:border-box;color:#111;pointer-events:none}
+#spot.on{opacity:1;transform:none}
+#spot .hd{display:flex;align-items:center;gap:1.2vw;border-bottom:.12vw solid #111;padding-bottom:.6vw;margin-bottom:.9vw}
+#spot .sid{font-size:3.6vw;font-weight:900;letter-spacing:.04em;line-height:1}
+#spot .snm{font-size:1.35vw;font-weight:700;line-height:1.2}
+#spot .ssub{font-size:.85vw;color:#444;letter-spacing:.1em;text-transform:uppercase;margin-top:.2vw}
+#spot .cat{margin-left:auto;font-size:2vw;font-weight:900;color:#fff;padding:.35vw 1.1vw;border-radius:.3vw;letter-spacing:.06em}
+#spot .bd{flex:1;display:flex;gap:1.2vw;min-height:0}
+#spot .wx{flex:0 0 46%;display:flex;flex-direction:column;gap:.5vw;min-width:0}
+#spot .kv{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.06vw solid #ccc;padding:.2vw 0}
+#spot .k{font-size:.8vw;letter-spacing:.14em;color:#555;text-transform:uppercase;font-weight:700}
+#spot .v{font-size:1.55vw;font-weight:800;text-align:right}
+#spot .raw{font:600 .78vw/1.35 Menlo,Consolas,monospace;color:#222;background:#f3f3ef;padding:.4vw .5vw;border-left:.25vw solid #888;white-space:pre-wrap;word-break:break-word}
+#spot .lab2{font-size:.8vw;letter-spacing:.14em;color:#555;text-transform:uppercase;font-weight:800;margin-top:.3vw}
+#spot .img{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+#spot .img .box{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#f6f6f2;border:.08vw solid #999;overflow:hidden}
+#spot .wx .img{flex:1;min-height:6vw;margin-top:.3vw}
+#spot .img .box img,#spot .img .box canvas{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#spot .cap{font-size:.72vw;color:#444;margin-top:.3vw;letter-spacing:.04em}
+#spot .phase{position:absolute;right:1.4vw;bottom:.6vw;font-size:.7vw;color:#666;letter-spacing:.1em}
+</style></head><body>
+<div id="cz"></div><div id="vig"></div><div id="dim"></div>
+<div class="card" id="title"><div class="t">SKYDECK <b>LIVE MAP · ORBIT</b></div><div class="s"><span id="clock">—</span> · <span id="cnt"></span> <span id="stale">STALE</span><br><span id="sun"></span> <span id="rtime"></span></div></div>
+<div class="card" id="legend"><div class="r" style="color:#19e35a"><i class="d" style="background:#19e35a"></i>VFR</div><div class="r" style="color:#2f7bff"><i class="d" style="background:#2f7bff"></i>MVFR</div><div class="r" style="color:#ff2a3a"><i class="d" style="background:#ff2a3a"></i>IFR</div><div class="r" style="color:#ff3cf0"><i class="d" style="background:#ff3cf0"></i>LIFR</div></div>
+<div class="card" id="plan"><h3>Flight Plan</h3><div class="big" id="pRoute"></div>
+<div class="row" style="margin-top:.3vw"><div><div class="lab">Depart</div><div class="val" id="pDep"></div></div><div><div class="lab">Arrive (ETA)</div><div class="val" id="pEta"></div></div></div>
+<div class="row" style="margin-top:.2vw"><div><div class="lab">Route</div><div class="val" id="pVia" style="font-size:.8vw;font-weight:400"></div></div><div><div class="lab">Dist</div><div class="val" id="pDist"></div></div></div></div>
+<div id="spot"></div>
+<button id="radarBtn" tabindex="0">RADAR OFF (R)</button>
+<script>
+const Q=new URLSearchParams(location.search),$=id=>document.getElementById(id),C=Cesium;
+const COL={VFR:'#19e35a',MVFR:'#2f7bff',IFR:'#ff2a3a',LIFR:'#ff3cf0'};
+let stations=[],planData=null,radarOn=Q.get('radar')==='1'||localStorage.radar==='1',userT=0,mode='orbit';
+const viewer=new C.Viewer('cz',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,msaaSamples:4,useBrowserRecommendedResolution:false,contextOptions:{webgl:{alpha:false}}});
+const S=viewer.scene,G=S.globe,L=viewer.imageryLayers;
+viewer.resolutionScale=Math.min(2,window.devicePixelRatio||1);
+viewer.clock.shouldAnimate=true;viewer.clock.multiplier=1;viewer.clock.currentTime=C.JulianDate.now();
+// Real sun: Cesium's SunLight follows the clock (= now), so terminator + day/night lighting are astronomically placed.
+G.enableLighting=true;G.dynamicAtmosphereLighting=true;G.dynamicAtmosphereLightingFromSun=true;G.showGroundAtmosphere=true;
+G.lightingFadeOutDistance=1;G.lightingFadeInDistance=2;G.nightFadeOutDistance=1;G.nightFadeInDistance=2;
+G.baseColor=C.Color.fromCssColorString('#05101c');G.maximumScreenSpaceError=1.5;G.tileCacheSize=400;
+S.skyAtmosphere.show=true;S.skyAtmosphere.atmosphereLightIntensity=12;S.fog.enabled=true;S.fog.density=1.2e-4;
+S.sun.show=true;S.moon.show=true;S.highDynamicRange=false;
+const bloom=S.postProcessStages.bloom;bloom.enabled=true;bloom.uniforms.contrast=119;bloom.uniforms.brightness=-0.35;bloom.uniforms.delta=1;bloom.uniforms.sigma=2.2;bloom.uniforms.stepSize=1;
+const day=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maximumLevel:19,credit:'Imagery © Esri, Maxar, Earthstar Geographics'}));
+day.saturation=1.15;day.contrast=1.12;day.brightness=1.0;day.gamma=1.05;
+const night=L.addImageryProvider(new C.UrlTemplateImageryProvider({url:'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png',maximumLevel:8,credit:'NASA Black Marble (VIIRS)'}));
+night.dayAlpha=0;night.nightAlpha=1;night.brightness=1.6;
+// ---------- real GOES-East IR clouds (IEM), turned into soft white cloud alpha ----------
+let cloudLayer=null;const CR=C.Rectangle.fromDegrees(-135,18,-58,55);
+async function loadClouds(){try{const im=new Image();im.crossOrigin='anonymous';await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src='/api/clouds?t='+Date.now()});
+ const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);const d=g.getImageData(0,0,cv.width,cv.height),p=d.data;
+ const Wd=cv.width,Hd=cv.height,fe=60;for(let i=0;i<p.length;i+=4){if(p[i+3]<10||(p[i]>248&&p[i+1]>248&&p[i+2]>248)){p[i+3]=0;continue}const x=(i/4)%Wd,y=(i/4/Wd)|0,edge=Math.min(1,x/fe,(Wd-x)/fe,y/fe,(Hd-y)/fe);const r=p[i],gg=p[i+1],b=p[i+2],gray=Math.abs(r-gg)<14&&Math.abs(gg-b)<14,v=gray?r:255;let a=Math.max(0,Math.min(1,(v-158)/85));a=a*a*(3-2*a)*edge;
+  p[i]=236+19*a;p[i+1]=240+15*a;p[i+2]=246+9*a;p[i+3]=a*215}
+ g.putImageData(d,0,0);const prov=await C.SingleTileImageryProvider.fromUrl(cv.toDataURL('image/png'),{rectangle:CR,credit:'GOES-East ABI Band 13 IR via Iowa Environmental Mesonet'});
+ const nl=L.addImageryProvider(prov);nl.alpha=0;fadeLayer(nl,.82);if(cloudLayer){const o=cloudLayer;fadeLayer(o,0,()=>L.remove(o))}cloudLayer=nl;radarTop()}catch(e){console.warn('clouds',e)}}
+function fadeLayer(l,to,done){const a0=l.alpha,t0=performance.now();const f=n=>{const k=Math.min(1,(n-t0)/1500);l.alpha=a0+(to-a0)*k;if(k<1)requestAnimationFrame(f);else done&&done()};requestAnimationFrame(f)}
+// ---------- live NEXRAD radar (IEM n0q) ----------
+let radarLayer=null,radarT=null;const RR=C.Rectangle.fromDegrees(-127,22,-64,52);
+async function loadRadar(){if(!radarOn)return;try{const prov=await C.SingleTileImageryProvider.fromUrl('/api/radar?t='+Date.now(),{rectangle:RR,credit:'NEXRAD via Iowa Environmental Mesonet'});
+ const nl=L.addImageryProvider(prov);nl.alpha=0;nl.show=radarOn;fadeLayer(nl,.9);if(radarLayer){const o=radarLayer;fadeLayer(o,0,()=>L.remove(o))}radarLayer=nl;radarT=new Date();$('rtime').textContent='· Radar '+fmt(radarT)}catch(e){console.warn('radar',e)}}
+function radarTop(){if(radarLayer)L.raiseToTop(radarLayer)}
+function setRadar(v){radarOn=v;localStorage.radar=v?'1':'0';$('radarBtn').textContent='RADAR '+(v?'ON':'OFF')+' (R)';$('radarBtn').classList.toggle('on',v);
+ if(v&&!radarLayer)loadRadar();if(radarLayer)radarLayer.show=v;if(!v)$('rtime').textContent=''}
+// ---------- METAR markers ----------
+const pts=S.primitives.add(new C.PointPrimitiveCollection()),halo=S.primitives.add(new C.PointPrimitiveCollection());
+function drawLeds(){pts.removeAll();halo.removeAll();const all=Q.get('all')==='1',keep=new Set(['KPAH','KMWA','KCGI','KEVV','KSTL','KBNA','KMEM','KSDF']);const occ=new Set();let n=0;
+ const px=Math.max(5,Math.round(S.canvas.height/190));
+ const list=stations.filter(s=>all||/^K[A-Z]{3}$/.test(s[0])||keep.has(s[0])).sort((a,b)=>(keep.has(b[0])-keep.has(a[0]))||(b[4]-a[4]));
+ for(const s of list){const c=COL[s[3]];if(!c)continue;const k=Math.floor(s[1]/1.15)+','+Math.floor(s[2]/1.45);if(!all&&occ.has(k)&&!keep.has(s[0]))continue;occ.add(k);n++;
+  const pos=C.Cartesian3.fromDegrees(s[2],s[1],800),col=C.Color.fromCssColorString(c),sbd=new C.NearFarScalar(3e5,2.2,6e6,1);
+  halo.add({position:pos,pixelSize:px*2.6,color:col.withAlpha(.22),scaleByDistance:sbd,disableDepthTestDistance:Number.POSITIVE_INFINITY});
+  pts.add({position:pos,pixelSize:px,color:col,outlineColor:C.Color.fromBytes(5,8,12,240),outlineWidth:Math.max(1.5,px*.22),scaleByDistance:sbd,disableDepthTestDistance:Number.POSITIVE_INFINITY})}
+ $('cnt').textContent=n+' METAR stations'}
+let lastOk=0;async function loadMetars(){try{const j=await(await fetch('/api/metars',{cache:'no-store'})).json();stations=j.stations;lastOk=Date.now();$('stale').style.display='none';drawLeds()}catch{}}
+// ---------- sun readout (real subsolar point) ----------
+function subsolar(d){const jd=d/864e5+2440587.5,n=jd-2451545,Lm=(280.46+.9856474*n)%360,g=(357.528+.9856003*n)*Math.PI/180,lam=(Lm+1.915*Math.sin(g)+.02*Math.sin(2*g))*Math.PI/180,eps=(23.439-4e-7*n)*Math.PI/180;
+ const dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam)),gmst=(280.46061837+360.98564736629*n)%360;let lon=(ra*180/Math.PI-gmst)%360;lon=((lon+540)%360)-180;return{lat:dec*180/Math.PI,lon}}
+function tick(){const ss=subsolar(Date.now());$('sun').textContent=`Sun overhead ${Math.abs(ss.lat).toFixed(1)}°${ss.lat<0?'S':'N'} ${Math.abs(ss.lon).toFixed(1)}°${ss.lon<0?'W':'E'}`;
+ $('clock').textContent=new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago',timeZoneName:'short'})+(lastOk?' · METAR '+fmt(lastOk,false):'');
+ if(lastOk&&Date.now()-lastOk>15*6e4)$('stale').style.display='inline';viewer.clock.currentTime=C.JulianDate.now()}
+// ---------- slow satellite orbit over CONUS ----------
+const PER=+(Q.get('orbit')||900)*1000,T0=Date.now();
+function orbitPose(t){const w=2*Math.PI*((t-T0)/PER);const lon=-96+21*Math.sin(w),lat=37.5+4.5*Math.sin(2*w+.6),hd=C.Math.toRadians(8*Math.cos(w)),pitch=C.Math.toRadians(-52-6*Math.sin(w*1.5)),range=3.0e6+5e5*Math.cos(w*2);
+ const cam=new C.Camera(S);cam.lookAt(C.Cartesian3.fromDegrees(lon,lat,0),new C.HeadingPitchRange(hd,pitch,range));cam.lookAtTransform(C.Matrix4.IDENTITY);return cam}
+function applyOrbit(){const c=orbitPose(Date.now());S.camera.setView({destination:c.positionWC,orientation:{direction:c.directionWC,up:c.upWC}})}
+S.preRender.addEventListener(()=>{if(mode==='orbit')applyOrbit()});
+function backToOrbit(ms=4500){mode='fly';const c=orbitPose(Date.now()+ms);return new Promise(ok=>S.camera.flyTo({destination:c.positionWC,orientation:{direction:c.directionWC,up:c.upWC},duration:ms/1000,easingFunction:C.EasingFunction.CUBIC_IN_OUT,complete:()=>{mode='orbit';ok()},cancel:ok}))}
+const scc=S.screenSpaceCameraController;scc.inertiaSpin=.8;scc.inertiaZoom=.6;
+['pointerdown','wheel','touchstart'].forEach(ev=>S.canvas.addEventListener(ev,()=>{userT=Date.now();if(mode!=='user'){S.camera.cancelFlight();mode='user'}},{passive:true}));
+setInterval(()=>{if(mode==='user'&&Date.now()-userT>60e3&&!spotOn)backToOrbit(6000)},2000);
+// ---------- flight plan route ----------
+let routeEnt=[];function drawRoute(){routeEnt.forEach(e=>viewer.entities.remove(e));routeEnt=[];if(!planData)return;
+ const pos=planData.route.map(p=>C.Cartesian3.fromDegrees(p.lon,p.lat,1500));
+ routeEnt.push(viewer.entities.add({polyline:{positions:pos,width:14,arcType:C.ArcType.GEODESIC,material:new C.PolylineGlowMaterialProperty({glowPower:.28,taperPower:1,color:C.Color.fromCssColorString('#ff2fa8')})}}));
+ routeEnt.push(viewer.entities.add({polyline:{positions:pos,width:3,arcType:C.ArcType.GEODESIC,material:C.Color.WHITE.withAlpha(.9)}}));
+ planData.route.forEach((p,i)=>{const end=i===0||i===planData.route.length-1;routeEnt.push(viewer.entities.add({position:C.Cartesian3.fromDegrees(p.lon,p.lat,1500),
+  point:{pixelSize:end?14:8,color:C.Color.WHITE,outlineColor:C.Color.fromCssColorString('#ff2fa8'),outlineWidth:3,disableDepthTestDistance:Number.POSITIVE_INFINITY},
+  label:end?{text:p.id,font:'800 28px Helvetica Neue, Arial',fillColor:C.Color.WHITE,outlineColor:C.Color.BLACK,outlineWidth:5,style:C.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new C.Cartesian2(16,-16),horizontalOrigin:C.HorizontalOrigin.LEFT,disableDepthTestDistance:Number.POSITIVE_INFINITY}:undefined}))})}
+const fmt=(d,z)=>new Date(d).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago',timeZoneName:z===false?undefined:'short'});
+const fmtD=d=>new Date(d).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago',timeZoneName:'short'});
+
+let VER=null;function prefetch(){if(planData)for(const a of[planData.dep.id,planData.dest.id])spotData(a).catch(()=>{})}
+async function loadPlan(){try{const j=await(await fetch('/api/plan',{cache:'no-store'})).json();
+ if(VER&&j.version&&j.version!==VER){location.reload();return}VER=VER||j.version;
+ let c=null;try{c=JSON.parse(localStorage.lmPlan||'null')}catch{}const prev=planData&&planData.received;
+ if(j.plan){planData=j.plan;localStorage.lmPlan=JSON.stringify({plan:j.plan,boot:j.boot})}
+ else if(c&&c.boot!==j.boot&&c.plan.expires>Date.now())planData=c.plan;
+ else{planData=null;if(c&&c.boot===j.boot)localStorage.removeItem('lmPlan')}
+ if((planData&&planData.received)!==prev){drawRoute();prefetch()}}catch{}const el=$('plan');
+ if(planData){el.style.display='block';$('pRoute').textContent=planData.dep.id+' → '+planData.dest.id;$('pDep').textContent=fmtD(planData.etd);$('pEta').textContent=fmtD(planData.eta);
+  $('pVia').textContent=planData.route.map(p=>p.id).join(' ');$('pDist').textContent=planData.distNm+' NM';}else el.style.display='none'}
+// ---------- Airport Spotlight: orbit -> DEP -> orbit -> DEST every ?cycle= s (default 15) ----------
+const CYC=Math.max(5,+(Q.get('cycle')||15))*1000,SP={},CATC={VFR:'#00a83a',MVFR:'#0a50ff',IFR:'#e00010',LIFR:'#c000c0'};let phase=0,spotOn=null,tok=0;
+setInterval(()=>{if(!planData){if(spotOn)hideSpot();phase=0;return}if(mode==='user'&&Date.now()-userT<60e3)return;
+ phase=(phase+1)%4;tok++;if(phase===1)showSpot(planData.dep.id,'DEPARTURE');else if(phase===3)showSpot(planData.dest.id,'DESTINATION');else hideSpot()},CYC);
+function hideSpot(){const was=spotOn;spotOn=null;$('spot').classList.remove('on');if(!was)return;setTimeout(()=>{if(spotOn)return;$('dim').classList.remove('on');$('radarBtn').style.visibility='';backToOrbit(4500)},700)}
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function spotData(id){const s=SP[id];if(s&&Date.now()-s.t<120e3)return s.d;const d=await(await fetch('/api/spot?id='+id)).json();SP[id]={t:Date.now(),d,apd:s?.apd,aer:s?.aer};
+ if(!SP[id].aer){const im=new Image();im.src=`/api/aerial?lat=${d.lat}&lon=${d.lon}&span=${spanFor(d)}`;SP[id].aer=im}
+ if(d.apd&&!SP[id].apd)SP[id].apd=renderApd(id);return d}
+function spanFor(d){const L=Math.max(3000,...(d.runways||[]).map(r=>+String(r.dimension).split('x')[0]||0));return Math.min(.05,Math.max(.012,L/364000*.85))}
+let pdfjs=null;async function renderApd(id){try{pdfjs=pdfjs||await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+ const doc=await pdfjs.getDocument('/api/apd?id='+id).promise,pg=await doc.getPage(1),vp=pg.getViewport({scale:3}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+ await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;return cv.toDataURL('image/png')}catch(e){console.warn('apd',e);return null}}
+const ft=m=>Math.round(m*3.28084);
+function decode(m){if(!m)return null;const wind=m.wspd===0?'Calm':(m.wdir==='VRB'?'VRB':String(m.wdir).padStart(3,'0')+'°')+' '+m.wspd+(m.wgst?'G'+m.wgst:'')+' kt';
+ const vis=(String(m.visib).replace('+','')==='10'?'10+':m.visib)+' SM';const cl=(m.clouds||[]);const ceil=cl.find(c=>/BKN|OVC|OVX/.test(c.cover));
+ const sky=cl.length?cl.map(c=>c.cover+(c.base!=null?String(Math.round(c.base/100)).padStart(3,'0'):'')).join(' '):(m.cover||'CLR');
+ const alt=m.altim?(m.altim*0.02953).toFixed(2)+' inHg':'—',cF=t=>t==null?'—':t.toFixed(0)+'°C';
+ return{wind,vis,ceil:ceil?ceil.base.toLocaleString()+' ft '+ceil.cover:'None',sky,td:cF(m.temp)+' / '+cF(m.dewp),alt,wx:m.wxString||'',obs:new Date(m.obsTime*1000)}}
+function tafLines(t){if(!t)return'';return t.rawTAF.replace(/\s+(FM\d{6}|TEMPO|BECMG|PROB\d{2})/g,'\n$1').split('\n').slice(0,6).join('\n')}
+
+async function showSpot(id,role){const my=tok;let d;try{d=await spotData(id)}catch{return}if(!planData||my!==tok)return;spotOn=id;const s=SP[id],m=decode(d.metar),cat=d.metar?.fltCat||'';
+ const apd=s.apd?await Promise.race([s.apd,new Promise(r=>setTimeout(()=>r(null),4000))]):null;if(spotOn!==id||my!==tok)return;
+ const aer=`<div class="img"><div class="lab2">Aerial View</div><div class="box"><img src="${s.aer.src}" style="width:100%;height:100%;object-fit:cover"></div><div class="cap">USGS National Map (NAIP)${apd?'':' · no FAA airport diagram for '+esc(id)}</div></div>`;
+ const imgs=apd?`<div class="img"><div class="lab2">FAA Airport Diagram</div><div class="box" style="background:#fff"><img src="${apd}"></div><div class="cap">FAA d-TPP cycle ${esc(d.apd.cycle)} · not for navigation</div></div>`:aer;
+ const kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`;
+ $('spot').innerHTML=`<div class="hd"><div class="sid">${esc(id)}</div><div><div class="snm">${esc(d.name.trim())}</div><div class="ssub">${role} · Elev ${esc(d.elev!=null?ft(d.elev)+' ft':'—')}</div></div>${cat?`<div class="cat" style="background:${CATC[cat]||'#555'}">${cat}</div>`:''}</div>
+ <div class="bd" style="flex-direction:column"><div class="wx">${m?kv('Wind',m.wind)+kv('Visibility',m.vis)+kv('Ceiling',m.ceil)+(m.wx?kv('Weather',m.wx):'')+kv('Temp / Dew',m.td)+kv('Altimeter',m.alt)+
+  `<div class="lab2">METAR · ${fmt(m.obs)}</div><div class="raw">${esc(d.metar.rawOb)}</div>`:'<div class="raw">No current METAR for '+esc(id)+'</div>'}
+  <div class="lab2">TAF ${d.taf&&d.tafNear?`· nearest: ${esc(d.taf.icaoId)} (${d.tafNear} NM)`:''}</div><div class="raw">${d.taf?esc(tafLines(d.taf)):'No TAF within 40 NM'}</div></div>${imgs}</div>
+ <div class="phase">AIRPORT SPOTLIGHT · ${role==='DEPARTURE'?'1':'2'}/2</div>`;
+ $('dim').classList.add('on');$('radarBtn').style.visibility='hidden';
+ // satellite dive: oblique 3D view, airport framed in the left half (centre offset east so the card on the right does not cover it)
+ const range=26000,off=range*.42/111320/Math.cos(d.lat*Math.PI/180);mode='fly';
+ await new Promise(ok=>S.camera.flyToBoundingSphere(new C.BoundingSphere(C.Cartesian3.fromDegrees(d.lon+off,d.lat,0),1),{offset:new C.HeadingPitchRange(0,C.Math.toRadians(-48),range),duration:4.5,easingFunction:C.EasingFunction.CUBIC_IN_OUT,complete:ok,cancel:ok}));
+ if(my!==tok||spotOn!==id)return;mode='spot';$('spot').classList.add('on')}
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='r'||k==='enter'||k===' '||e.keyCode===403||e.keyCode===13){e.preventDefault();setRadar(!radarOn)}else if(k==='o'||k==='0'){userT=0;backToOrbit(4000)}});
+$('radarBtn').onclick=()=>setRadar(!radarOn);
+(async()=>{applyOrbit();setRadar(radarOn);$('radarBtn').focus();tick();
+ await Promise.all([loadMetars(),loadPlan(),loadClouds()]);
+ setInterval(loadMetars,5*6e4);setInterval(loadPlan,6e4);setInterval(loadRadar,5*6e4);setInterval(loadClouds,10*6e4);setInterval(tick,15e3);
+ setInterval(()=>fetch('/api/ping',{cache:'no-store'}).catch(()=>{}),5*6e4);setTimeout(()=>location.reload(),6*36e5);
+ addEventListener('resize',()=>setTimeout(drawLeds,300))})();
+</script></body></html>
