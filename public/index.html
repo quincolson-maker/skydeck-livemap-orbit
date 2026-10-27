@@ -92,11 +92,10 @@ function setRadar(v){radarOn=v;localStorage.radar=v?'1':'0';$('radarBtn').textCo
 // ---------- METAR markers ----------
 const pts=S.primitives.add(new C.PointPrimitiveCollection()),halo=S.primitives.add(new C.PointPrimitiveCollection());
 function drawLeds(){pts.removeAll();halo.removeAll();const all=Q.get('all')==='1',keep=new Set(['KPAH','KMWA','KCGI','KEVV','KSTL','KBNA','KMEM','KSDF']);const occ=new Set();let n=0;
- const px=Math.max(3,Math.round(S.canvas.height/400));
+ const px=Math.min(7,Math.max(3,Math.round(S.canvas.height/420)));
  const list=stations.filter(s=>all||/^K[A-Z]{3}$/.test(s[0])||keep.has(s[0])).sort((a,b)=>(keep.has(b[0])-keep.has(a[0]))||(b[4]-a[4]));
  for(const s of list){const c=COL[s[3]];if(!c)continue;const k=Math.floor(s[1]/1.15)+','+Math.floor(s[2]/1.45);if(!all&&occ.has(k)&&!keep.has(s[0]))continue;occ.add(k);n++;
-  const pos=C.Cartesian3.fromDegrees(s[2],s[1],800),col=C.Color.fromCssColorString(c),sbd=new C.NearFarScalar(2e5,1.8,5e6,.85);
-  halo.add({position:pos,pixelSize:px*1.7,color:col.withAlpha(.12),scaleByDistance:sbd,disableDepthTestDistance:Number.POSITIVE_INFINITY});
+  const pos=C.Cartesian3.fromDegrees(s[2],s[1],800),col=C.Color.fromCssColorString(c),sbd=new C.NearFarScalar(1e5,1.6,4e6,1);
   pts.add({position:pos,pixelSize:px,color:col,outlineColor:C.Color.fromBytes(5,8,12,240),outlineWidth:Math.max(1,px*.25),scaleByDistance:sbd,disableDepthTestDistance:Number.POSITIVE_INFINITY})}
  $('cnt').textContent=n+' METAR stations'}
 let lastOk=0;async function loadMetars(){try{const j=await(await fetch('/api/metars',{cache:'no-store'})).json();stations=j.stations;lastOk=Date.now();$('stale').style.display='none';drawLeds()}catch{}}
