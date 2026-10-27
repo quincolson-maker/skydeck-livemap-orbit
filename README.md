@@ -1,4 +1,4 @@
-# SkyDeck Live Map · Orbit
+# SkyDeck Orbit
 3D satellite-view companion to [SkyDeck Live Map](https://skydeck-livemap.onrender.com): a CesiumJS globe with a slow automated orbital camera over CONUS, made for a 75-inch TV.
 
 - **Real sun**: Cesium SunLight driven by the real clock — day/night terminator, globe shading and atmosphere scattering follow the actual solar position. Night side shows NASA Black Marble city lights.

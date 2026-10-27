@@ -1,4 +1,4 @@
-// SkyDeck Live Map · Orbit — 3D satellite-view globe. Zero dependencies (Node >= 18).
+// SkyDeck Orbit — 3D satellite-view globe. Zero dependencies (Node >= 18).
 const http = require('http'), fs = require('fs'), path = require('path'), zlib = require('zlib');
 const PORT = +process.env.PORT || 8080, HOST = process.env.HOST || '127.0.0.1';
 const KEY = process.env.INBOUND_KEY || '';
@@ -186,5 +186,5 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { json(res, 502, { error: e.message }); }
 });
 setTimeout(() => dtppIndex().catch(() => {}), 2000); // warm FAA d-TPP index so the first spotlight is instant
-server.listen(PORT, HOST, () => console.log(`SkyDeck Live Map → http://${HOST}:${PORT}`));
+server.listen(PORT, HOST, () => console.log(`SkyDeck Orbit → http://${HOST}:${PORT}`));
 module.exports = { parsePlan };

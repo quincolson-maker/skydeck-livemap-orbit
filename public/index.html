@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SkyDeck Live Map · Orbit</title>
-<link rel="icon" href="data:,"><script>window.onerror=(m)=>{const d=document.getElementById("err");if(d){d.style.display="block";d.textContent="Orbit map could not start: "+m+" — this view needs a browser with WebGL (Chrome/Edge/Safari). The 2D map is at skydeck-livemap.onrender.com"}};window.CESIUM_BASE_URL='https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/'</script>
+<title>SkyDeck Orbit</title>
+<link rel="icon" href="data:,"><script>window.onerror=(m)=>{const d=document.getElementById("err");if(d){d.style.display="block";d.textContent="SkyDeck Orbit could not start: "+m+" — this view needs a browser with WebGL (Chrome/Edge/Safari). The 2D map is at skydeck-livemap.onrender.com"}};window.CESIUM_BASE_URL='https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/'</script>
 <script src="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Cesium.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 <style>
@@ -47,7 +47,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"Helv
 #spot .phase{position:absolute;right:1.4vw;bottom:.6vw;font-size:.7vw;color:#666;letter-spacing:.1em}
 </style></head><body>
 <div id="err" style="display:none;position:fixed;z-index:9;left:20%;right:20%;top:40%;padding:2vw;background:#111;color:#fff;font-size:1.4vw;border-radius:1vw"></div><div id="cz"></div><div id="vig"></div><div id="dim"></div>
-<div class="card" id="title"><div class="t">SKYDECK <b>LIVE MAP · ORBIT</b></div><div class="s"><span id="clock">—</span> · <span id="cnt"></span> <span id="stale">STALE</span><br><span id="sun"></span> <span id="rtime"></span></div></div>
+<div class="card" id="title"><div class="t">SKYDECK <b>ORBIT</b></div><div class="s"><span id="clock">—</span> · <span id="cnt"></span> <span id="stale">STALE</span><br><span id="sun"></span> <span id="rtime"></span></div></div>
 <div class="card" id="legend"><div class="r" style="color:#19e35a"><i class="d" style="background:#19e35a"></i>VFR</div><div class="r" style="color:#2f7bff"><i class="d" style="background:#2f7bff"></i>MVFR</div><div class="r" style="color:#ff2a3a"><i class="d" style="background:#ff2a3a"></i>IFR</div><div class="r" style="color:#ff3cf0"><i class="d" style="background:#ff3cf0"></i>LIFR</div></div>
 <div class="card" id="plan"><h3>Flight Plan</h3><div class="big" id="pRoute"></div>
 <div class="row" style="margin-top:.3vw"><div><div class="lab">Depart</div><div class="val" id="pDep"></div></div><div><div class="lab">Arrive (ETA)</div><div class="val" id="pEta"></div></div></div>
@@ -60,7 +60,7 @@ const COL={VFR:'#19e35a',MVFR:'#2f7bff',IFR:'#ff2a3a',LIFR:'#ff3cf0'};
 let stations=[],planData=null,radarOn=Q.get('radar')==='1'||localStorage.radar==='1',userT=0,mode='orbit';
 const viewer=new C.Viewer('cz',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,msaaSamples:4,useBrowserRecommendedResolution:false,contextOptions:{webgl:{alpha:false}}});
 const S=viewer.scene,G=S.globe,L=viewer.imageryLayers;
-viewer.resolutionScale=Math.min(2,window.devicePixelRatio||1);
+viewer.resolutionScale=Math.min(innerWidth<900?1.5:2,window.devicePixelRatio||1);
 viewer.clock.shouldAnimate=true;viewer.clock.multiplier=1;viewer.clock.currentTime=C.JulianDate.now();
 // Real sun: Cesium's SunLight follows the clock (= now), so terminator + day/night lighting are astronomically placed.
 G.enableLighting=true;G.dynamicAtmosphereLighting=true;G.dynamicAtmosphereLightingFromSun=true;G.showGroundAtmosphere=true;
